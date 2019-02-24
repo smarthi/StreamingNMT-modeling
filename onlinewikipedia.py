@@ -46,7 +46,7 @@ def main():
         documentstoanalyze = int(sys.argv[1])
 
     # Our vocabulary
-    vocab = file('./dictnostops.txt').readlines()
+    vocab = open('./dictnostops.txt', 'rt').readlines()
     W = len(vocab)
 
     # Initialize the algorithm with alpha=1/K, eta=1/K, tau_0=1024, kappa=0.7

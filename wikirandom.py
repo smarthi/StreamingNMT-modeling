@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, urllib2, re, string, time, threading
+import sys, urllib.request, urllib.error, re, string, time, threading
 
 def get_random_wikipedia_article():
     """
@@ -31,26 +31,23 @@ def get_random_wikipedia_article():
         articletitle = None
         failed = False
         try:
-            req = urllib2.Request('http://en.wikipedia.org/wiki/Special:Random',
-                                  None, { 'User-Agent' : 'x'})
-            f = urllib2.urlopen(req)
+            f = urllib.request.urlopen('http://en.wikipedia.org/wiki/Special:Random', None, { 'User-Agent' : 'x'})
+            # f = urllib.urlopen(req)
             while not articletitle:
                 line = f.readline()
-                result = re.search(r'title="Edit this page" href="/w/index.php\?title=(.*)\&amp;action=edit"/\>', line)
+                result = re.search(r'title="Edit this page" href="/w/index.php\?title=(.*)&amp;action=edit"/>', line)
                 if (result):
                     articletitle = result.group(1)
                     break
                 elif (len(line) < 1):
                     sys.exit(1)
 
-            req = urllib2.Request('http://en.wikipedia.org/w/index.php?title=Special:Export/%s&action=submit' \
-                                      % (articletitle),
-                                  None, { 'User-Agent' : 'x'})
-            f = urllib2.urlopen(req)
+            f = urllib.request.urlopen('http://en.wikipedia.org/w/index.php?title=Special:Export/%s&action=submit' \
+                                      % (articletitle), None, { 'User-Agent' : 'x'})
+            # f = urllib.urlopen(req)
             all = f.read()
-        except (urllib2.HTTPError, urllib2.URLError):
-            print('oops. there was a failure downloading %s. retrying...' \
-                % articletitle)
+        except (urllib.error.HTTPError, urllib.error.URLError):
+            print('oops. there was a failure downloading %s. retrying...' % articletitle)
             failed = True
             continue
         print('downloaded %s. parsing...' % articletitle)
@@ -58,7 +55,7 @@ def get_random_wikipedia_article():
         try:
             all = re.search(r'<text.*?>(.*)</text', all, flags=re.DOTALL).group(1)
             all = re.sub(r'\n', ' ', all)
-            all = re.sub(r'\{\{.*?\}\}', r'', all)
+            all = re.sub(r'{{.*?\}\}', r'', all)
             all = re.sub(r'\[\[Category:.*', '', all)
             all = re.sub(r'==\s*[Ss]ource\s*==.*', '', all)
             all = re.sub(r'==\s*[Rr]eferences\s*==.*', '', all)
@@ -68,8 +65,8 @@ def get_random_wikipedia_article():
             all = re.sub(r'http://[^\s]*', '', all)
             all = re.sub(r'\[\[Image:.*?\]\]', '', all)
             all = re.sub(r'Image:.*?\|', '', all)
-            all = re.sub(r'\[\[.*?\|*([^\|]*?)\]\]', r'\1', all)
-            all = re.sub(r'\&lt;.*?&gt;', '', all)
+            all = re.sub(r'\[\[.*?\|*([^|]*?)\]\]', r'\1', all)
+            all = re.sub(r'&lt;.*?&gt;', '', all)
         except:
             # Something went wrong, try again. (This is bad coding practice.)
             print('oops. there was a failure parsing %s. retrying...' \
