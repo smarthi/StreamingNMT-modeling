@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, urllib.request, urllib.error, re, string, time, threading
+import sys, urllib.error, re, string, time, threading
+import requests
 
 def get_random_wikipedia_article():
     """
@@ -31,10 +32,10 @@ def get_random_wikipedia_article():
         articletitle = None
         failed = False
         try:
-            f = urllib.request.urlopen('http://en.wikipedia.org/wiki/Special:Random', None, { 'User-Agent' : 'x'})
+            f = requests.get('http://en.wikipedia.org/wiki/Special:Random', { 'User-Agent' : 'x'})
             # f = urllib.urlopen(req)
             while not articletitle:
-                line = f.readline()
+                line = f.text
                 result = re.search(r'title="Edit this page" href="/w/index.php\?title=(.*)&amp;action=edit"/>', line)
                 if (result):
                     articletitle = result.group(1)
@@ -42,10 +43,10 @@ def get_random_wikipedia_article():
                 elif (len(line) < 1):
                     sys.exit(1)
 
-            f = urllib.request.urlopen('http://en.wikipedia.org/w/index.php?title=Special:Export/%s&action=submit' \
-                                      % (articletitle), None, { 'User-Agent' : 'x'})
+            f = requests.get('http://en.wikipedia.org/w/index.php?title=Special:Export/%s&action=submit' \
+                                      % (articletitle), { 'User-Agent' : 'x'})
             # f = urllib.urlopen(req)
-            all = f.read()
+            all = f.text
         except (urllib.error.HTTPError, urllib.error.URLError):
             print('oops. there was a failure downloading %s. retrying...' % articletitle)
             failed = True
