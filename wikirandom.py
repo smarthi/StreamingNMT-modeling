@@ -49,11 +49,11 @@ def get_random_wikipedia_article():
             f = urllib2.urlopen(req)
             all = f.read()
         except (urllib2.HTTPError, urllib2.URLError):
-            print 'oops. there was a failure downloading %s. retrying...' \
-                % articletitle
+            print('oops. there was a failure downloading %s. retrying...' \
+                % articletitle)
             failed = True
             continue
-        print 'downloaded %s. parsing...' % articletitle
+        print('downloaded %s. parsing...' % articletitle)
 
         try:
             all = re.search(r'<text.*?>(.*)</text', all, flags=re.DOTALL).group(1)
@@ -72,8 +72,8 @@ def get_random_wikipedia_article():
             all = re.sub(r'\&lt;.*?&gt;', '', all)
         except:
             # Something went wrong, try again. (This is bad coding practice.)
-            print 'oops. there was a failure parsing %s. retrying...' \
-                % articletitle
+            print('oops. there was a failure parsing %s. retrying...' \
+                % articletitle)
             failed = True
             continue
 
@@ -102,7 +102,7 @@ def get_random_wikipedia_articles(n):
     WikiThread.articlenames = list()
     wtlist = list()
     for i in range(0, n, maxthreads):
-        print 'downloaded %d/%d articles...' % (i, n)
+        print('downloaded %d/%d articles...' % (i, n))
         for j in range(i, min(i+maxthreads, n)):
             wtlist.append(WikiThread())
             wtlist[len(wtlist)-1].start()
@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
     (articles, articlenames) = get_random_wikipedia_articles(1)
     for i in range(0, len(articles)):
-        print articlenames[i]
+        print(articlenames[i])
 
     t1 = time.time()
-    print 'took %f' % (t1 - t0)
+    print('took %f' % (t1 - t0))

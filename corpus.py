@@ -1,5 +1,5 @@
 import os
-from itertools import izip
+# from itertools import izip
 import re
 # read and organize data
 
