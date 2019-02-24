@@ -16,10 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import cPickle, string, numpy, getopt, sys, random, time, re, pprint
+import string, numpy, getopt, sys, random, time, re, pprint
 
 import onlineldavb
 import wikirandom
+
+try:
+    import cPickle as pickle
+except:
+    import pickle
 
 def main():
     """
@@ -57,8 +62,7 @@ def main():
         # Compute an estimate of held-out perplexity
         (wordids, wordcts) = onlineldavb.parse_doc_list(docset, olda._vocab)
         perwordbound = bound * len(docset) / (D * sum(map(sum, wordcts)))
-        print '%d:  rho_t = %f,  held-out perplexity estimate = %f' % \
-            (iteration, olda._rhot, numpy.exp(-perwordbound))
+        print("%d:  rho_t = %f,  held-out perplexity estimate = %f" % (iteration, olda._rhot, numpy.exp(-perwordbound)))
 
         # Save lambda, the parameters to the variational distributions
         # over topics, and gamma, the parameters to the variational

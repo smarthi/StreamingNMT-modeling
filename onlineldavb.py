@@ -141,7 +141,7 @@ class OnlineLDA:
         it = 0
         meanchange = 0
         for d in range(0, batchD):
-            print sum(wordcts[d])
+            print(sum(wordcts[d]))
             # These are mostly just shorthand (but might help cache locality)
             ids = wordids[d]
             cts = wordcts[d]
@@ -160,7 +160,7 @@ class OnlineLDA:
                 # the update for gamma gives this update. Cf. Lee&Seung 2001.
                 gammad = self._alpha + expElogthetad * \
                     n.dot(cts / phinorm, expElogbetad.T)
-                print gammad[:, n.newaxis]
+                print(gammad[:, n.newaxis])
                 Elogthetad = dirichlet_expectation(gammad)
                 expElogthetad = n.exp(Elogthetad)
                 phinorm = n.dot(expElogthetad, expElogbetad) + 1e-100
@@ -376,7 +376,7 @@ class OnlineLDA:
         # E[log p(theta | alpha) - log q(theta | gamma)]
         score += n.sum((self._alpha - gamma)*Elogtheta)
         score += n.sum(gammaln(gamma) - gammaln(self._alpha))
-        score += sum(gammaln(self._alpha*self._K) - gammaln(n.sum(gamma, 1)))
+        score += n.sum(gammaln(self._alpha*self._K) - gammaln(n.sum(gamma, 1)))
 
         # Compensate for the subsampling of the population of documents
         score = score * self._D / len(wordids)
@@ -462,7 +462,7 @@ def main():
     model = OnlineLDA(vocab, K, 100000,
                       0.1, 0.01, 1, 0.75)
     for i in range(1000):
-        print i
+        print(i)
         wordids = [d.words for d in docs.docs[(i*S):((i+1)*S)]]
         wordcts = [d.counts for d in docs.docs[(i*S):((i+1)*S)]]
         model.update_lambda(wordids, wordcts)
