@@ -35,7 +35,7 @@ def main():
     # The number of documents to analyze each iteration
     batchsize = 64
     # The total number of documents in Wikipedia
-    D = 3.3e6
+    D = 3.3e2
     # The number of topics
     K = 100
 

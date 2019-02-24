@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, re, time, string
+import sys, re, time
 import numpy as n
 from scipy.special import gammaln, psi
 
@@ -25,13 +25,15 @@ import corpus
 n.random.seed(100000001)
 meanchangethresh = 0.001
 
+
 def dirichlet_expectation(alpha):
     """
     For a vector theta ~ Dir(alpha), computes E[log(theta)] given alpha.
     """
     if (len(alpha.shape) == 1):
-        return(psi(alpha) - psi(n.sum(alpha)))
-    return(psi(alpha) - psi(n.sum(alpha, 1))[:, n.newaxis])
+        return (psi(alpha) - psi(n.sum(alpha)))
+    return (psi(alpha) - psi(n.sum(alpha, 1))[:, n.newaxis])
+
 
 def parse_doc_list(docs, vocab):
     """
@@ -62,7 +64,7 @@ def parse_doc_list(docs, vocab):
         docs = temp
 
     D = len(docs)
-    
+
     wordids = list()
     wordcts = list()
     for d in range(0, D):
@@ -70,7 +72,7 @@ def parse_doc_list(docs, vocab):
         docs[d] = re.sub(r'-', ' ', docs[d])
         docs[d] = re.sub(r'[^a-z ]', '', docs[d])
         docs[d] = re.sub(r' +', ' ', docs[d])
-        words = string.split(docs[d])
+        words = str.split(docs[d])
         ddict = dict()
         for word in words:
             if (word in vocab):
@@ -78,10 +80,11 @@ def parse_doc_list(docs, vocab):
                 if (not wordtoken in ddict):
                     ddict[wordtoken] = 0
                 ddict[wordtoken] += 1
-        wordids.append(ddict.keys())
-        wordcts.append(ddict.values())
+        wordids.append(list(ddict.keys()))
+        wordcts.append(list(ddict.values()))
 
-    return((wordids, wordcts))
+    return ((wordids, wordcts))
+
 
 class OnlineLDA:
     """
@@ -123,7 +126,7 @@ class OnlineLDA:
         self._updatect = 0
 
         # Initialize the variational distribution q(beta|lambda)
-        self._lambda = 1*n.random.gamma(100., 1./100., (self._K, self._W))
+        self._lambda = 1 * n.random.gamma(100., 1. / 100., (self._K, self._W))
         self._Elogbeta = dirichlet_expectation(self._lambda)
         self._expElogbeta = n.exp(self._Elogbeta)
 
@@ -132,7 +135,7 @@ class OnlineLDA:
 
         # Initialize the variational distribution q(theta|gamma) for
         # the mini-batch
-        gamma = 1*n.random.gamma(100., 1./100., (batchD, self._K))
+        gamma = 1 * n.random.gamma(100., 1. / 100., (batchD, self._K))
         Elogtheta = dirichlet_expectation(gamma)
         expElogtheta = n.exp(Elogtheta)
 
@@ -141,7 +144,7 @@ class OnlineLDA:
         it = 0
         meanchange = 0
         for d in range(0, batchD):
-            print(sum(wordcts[d]))
+            print((sum(wordcts[d])))
             # These are mostly just shorthand (but might help cache locality)
             ids = wordids[d]
             cts = wordcts[d]
@@ -149,7 +152,7 @@ class OnlineLDA:
             Elogthetad = Elogtheta[d, :]
             expElogthetad = expElogtheta[d, :]
             expElogbetad = self._expElogbeta[:, ids]
-            # The optimal phi_{dwk} is proportional to 
+            # The optimal phi_{dwk} is proportional to
             # expElogthetad_k * expElogbetad_w. phinorm is the normalizer.
             phinorm = n.dot(expElogthetad, expElogbetad) + 1e-100
             # Iterate between gamma and phi until convergence
@@ -159,8 +162,8 @@ class OnlineLDA:
                 # Substituting the value of the optimal phi back into
                 # the update for gamma gives this update. Cf. Lee&Seung 2001.
                 gammad = self._alpha + expElogthetad * \
-                    n.dot(cts / phinorm, expElogbetad.T)
-                print(gammad[:, n.newaxis])
+                         n.dot(cts / phinorm, expElogbetad.T)
+                print((gammad[:, n.newaxis]))
                 Elogthetad = dirichlet_expectation(gammad)
                 expElogthetad = n.exp(Elogthetad)
                 phinorm = n.dot(expElogthetad, expElogbetad) + 1e-100
@@ -171,15 +174,15 @@ class OnlineLDA:
             gamma[d, :] = gammad
             # Contribution of document d to the expected sufficient
             # statistics for the M step.
-            sstats[:, ids] += n.outer(expElogthetad.T, cts/phinorm)
+            sstats[:, ids] += n.outer(expElogthetad.T, cts / phinorm)
 
         # This step finishes computing the sufficient statistics for the
         # M step, so that
-        # sstats[k, w] = \sum_d n_{dw} * phi_{dwk} 
+        # sstats[k, w] = \sum_d n_{dw} * phi_{dwk}
         # = \sum_d n_{dw} * exp{Elogtheta_{dk} + Elogbeta_{kw}} / phinorm_{dw}.
         sstats = sstats * self._expElogbeta
 
-        return((gamma, sstats))
+        return ((gamma, sstats))
 
     def do_e_step_docs(self, docs):
         """
@@ -205,57 +208,57 @@ class OnlineLDA:
         (wordids, wordcts) = parse_doc_list(docs, self._vocab)
 
         return self.do_e_step(wordids, wordcts)
-    
-#         batchD = len(docs)
 
-#         # Initialize the variational distribution q(theta|gamma) for
-#         # the mini-batch
-#         gamma = 1*n.random.gamma(100., 1./100., (batchD, self._K))
-#         Elogtheta = dirichlet_expectation(gamma)
-#         expElogtheta = n.exp(Elogtheta)
+    #         batchD = len(docs)
 
-#         sstats = n.zeros(self._lambda.shape)
-#         # Now, for each document d update that document's gamma and phi
-#         it = 0
-#         meanchange = 0
-#         for d in range(0, batchD):
-#             # These are mostly just shorthand (but might help cache locality)
-#             ids = wordids[d]
-#             cts = wordcts[d]
-#             gammad = gamma[d, :]
-#             Elogthetad = Elogtheta[d, :]
-#             expElogthetad = expElogtheta[d, :]
-#             expElogbetad = self._expElogbeta[:, ids]
-#             # The optimal phi_{dwk} is proportional to 
-#             # expElogthetad_k * expElogbetad_w. phinorm is the normalizer.
-#             phinorm = n.dot(expElogthetad, expElogbetad) + 1e-100
-#             # Iterate between gamma and phi until convergence
-#             for it in range(0, 100):
-#                 lastgamma = gammad
-#                 # We represent phi implicitly to save memory and time.
-#                 # Substituting the value of the optimal phi back into
-#                 # the update for gamma gives this update. Cf. Lee&Seung 2001.
-#                 gammad = self._alpha + expElogthetad * \
-#                     n.dot(cts / phinorm, expElogbetad.T)
-#                 Elogthetad = dirichlet_expectation(gammad)
-#                 expElogthetad = n.exp(Elogthetad)
-#                 phinorm = n.dot(expElogthetad, expElogbetad) + 1e-100
-#                 # If gamma hasn't changed much, we're done.
-#                 meanchange = n.mean(abs(gammad - lastgamma))
-#                 if (meanchange < meanchangethresh):
-#                     break
-#             gamma[d, :] = gammad
-#             # Contribution of document d to the expected sufficient
-#             # statistics for the M step.
-#             sstats[:, ids] += n.outer(expElogthetad.T, cts/phinorm)
+    #         # Initialize the variational distribution q(theta|gamma) for
+    #         # the mini-batch
+    #         gamma = 1*n.random.gamma(100., 1./100., (batchD, self._K))
+    #         Elogtheta = dirichlet_expectation(gamma)
+    #         expElogtheta = n.exp(Elogtheta)
 
-#         # This step finishes computing the sufficient statistics for the
-#         # M step, so that
-#         # sstats[k, w] = \sum_d n_{dw} * phi_{dwk} 
-#         # = \sum_d n_{dw} * exp{Elogtheta_{dk} + Elogbeta_{kw}} / phinorm_{dw}.
-#         sstats = sstats * self._expElogbeta
+    #         sstats = n.zeros(self._lambda.shape)
+    #         # Now, for each document d update that document's gamma and phi
+    #         it = 0
+    #         meanchange = 0
+    #         for d in range(0, batchD):
+    #             # These are mostly just shorthand (but might help cache locality)
+    #             ids = wordids[d]
+    #             cts = wordcts[d]
+    #             gammad = gamma[d, :]
+    #             Elogthetad = Elogtheta[d, :]
+    #             expElogthetad = expElogtheta[d, :]
+    #             expElogbetad = self._expElogbeta[:, ids]
+    #             # The optimal phi_{dwk} is proportional to
+    #             # expElogthetad_k * expElogbetad_w. phinorm is the normalizer.
+    #             phinorm = n.dot(expElogthetad, expElogbetad) + 1e-100
+    #             # Iterate between gamma and phi until convergence
+    #             for it in range(0, 100):
+    #                 lastgamma = gammad
+    #                 # We represent phi implicitly to save memory and time.
+    #                 # Substituting the value of the optimal phi back into
+    #                 # the update for gamma gives this update. Cf. Lee&Seung 2001.
+    #                 gammad = self._alpha + expElogthetad * \
+    #                     n.dot(cts / phinorm, expElogbetad.T)
+    #                 Elogthetad = dirichlet_expectation(gammad)
+    #                 expElogthetad = n.exp(Elogthetad)
+    #                 phinorm = n.dot(expElogthetad, expElogbetad) + 1e-100
+    #                 # If gamma hasn't changed much, we're done.
+    #                 meanchange = n.mean(abs(gammad - lastgamma))
+    #                 if (meanchange < meanchangethresh):
+    #                     break
+    #             gamma[d, :] = gammad
+    #             # Contribution of document d to the expected sufficient
+    #             # statistics for the M step.
+    #             sstats[:, ids] += n.outer(expElogthetad.T, cts/phinorm)
 
-#         return((gamma, sstats))
+    #         # This step finishes computing the sufficient statistics for the
+    #         # M step, so that
+    #         # sstats[k, w] = \sum_d n_{dw} * phi_{dwk}
+    #         # = \sum_d n_{dw} * exp{Elogtheta_{dk} + Elogbeta_{kw}} / phinorm_{dw}.
+    #         sstats = sstats * self._expElogbeta
+
+    #         return((gamma, sstats))
 
     def update_lambda_docs(self, docs):
         """
@@ -289,13 +292,13 @@ class OnlineLDA:
         # Estimate held-out likelihood for current values of lambda.
         bound = self.approx_bound_docs(docs, gamma)
         # Update lambda based on documents.
-        self._lambda = self._lambda * (1-rhot) + \
-            rhot * (self._eta + self._D * sstats / len(docs))
+        self._lambda = self._lambda * (1 - rhot) + \
+                       rhot * (self._eta + self._D * sstats / len(docs))
         self._Elogbeta = dirichlet_expectation(self._lambda)
         self._expElogbeta = n.exp(self._Elogbeta)
         self._updatect += 1
 
-        return(gamma, bound)
+        return (gamma, bound)
 
     def update_lambda(self, wordids, wordcts):
         """
@@ -329,13 +332,13 @@ class OnlineLDA:
         # Estimate held-out likelihood for current values of lambda.
         bound = self.approx_bound(wordids, wordcts, gamma)
         # Update lambda based on documents.
-        self._lambda = self._lambda * (1-rhot) + \
-            rhot * (self._eta + self._D * sstats / len(wordids))
+        self._lambda = self._lambda * (1 - rhot) + \
+                       rhot * (self._eta + self._D * sstats / len(wordids))
         self._Elogbeta = dirichlet_expectation(self._lambda)
         self._expElogbeta = n.exp(self._Elogbeta)
         self._updatect += 1
 
-        return(gamma, bound)
+        return (gamma, bound)
 
     def approx_bound(self, wordids, wordcts, gamma):
         """
@@ -367,27 +370,27 @@ class OnlineLDA:
                 tmax = max(temp)
                 phinorm[i] = n.log(sum(n.exp(temp - tmax))) + tmax
             score += n.sum(cts * phinorm)
-#             oldphinorm = phinorm
-#             phinorm = n.dot(expElogtheta[d, :], self._expElogbeta[:, ids])
-#             print oldphinorm
-#             print n.log(phinorm)
-#             score += n.sum(cts * n.log(phinorm))
+        #             oldphinorm = phinorm
+        #             phinorm = n.dot(expElogtheta[d, :], self._expElogbeta[:, ids])
+        #             print oldphinorm
+        #             print n.log(phinorm)
+        #             score += n.sum(cts * n.log(phinorm))
 
         # E[log p(theta | alpha) - log q(theta | gamma)]
-        score += n.sum((self._alpha - gamma)*Elogtheta)
+        score += n.sum((self._alpha - gamma) * Elogtheta)
         score += n.sum(gammaln(gamma) - gammaln(self._alpha))
-        score += n.sum(gammaln(self._alpha*self._K) - gammaln(n.sum(gamma, 1)))
+        score += n.sum(gammaln(self._alpha * self._K) - gammaln(n.sum(gamma, 1)))
 
         # Compensate for the subsampling of the population of documents
         score = score * self._D / len(wordids)
 
         # E[log p(beta | eta) - log q (beta | lambda)]
-        score = score + n.sum((self._eta-self._lambda)*self._Elogbeta)
+        score = score + n.sum((self._eta - self._lambda) * self._Elogbeta)
         score = score + n.sum(gammaln(self._lambda) - gammaln(self._eta))
-        score = score + n.sum(gammaln(self._eta*self._W) - 
+        score = score + n.sum(gammaln(self._eta * self._W) -
                               gammaln(n.sum(self._lambda, 1)))
 
-        return(score)
+        return (score)
 
     def approx_bound_docs(self, docs, gamma):
         """
@@ -425,27 +428,28 @@ class OnlineLDA:
                 tmax = max(temp)
                 phinorm[i] = n.log(sum(n.exp(temp - tmax))) + tmax
             score += n.sum(cts * phinorm)
-#             oldphinorm = phinorm
-#             phinorm = n.dot(expElogtheta[d, :], self._expElogbeta[:, ids])
-#             print oldphinorm
-#             print n.log(phinorm)
-#             score += n.sum(cts * n.log(phinorm))
+        #             oldphinorm = phinorm
+        #             phinorm = n.dot(expElogtheta[d, :], self._expElogbeta[:, ids])
+        #             print oldphinorm
+        #             print n.log(phinorm)
+        #             score += n.sum(cts * n.log(phinorm))
 
         # E[log p(theta | alpha) - log q(theta | gamma)]
-        score += n.sum((self._alpha - gamma)*Elogtheta)
+        score += n.sum((self._alpha - gamma) * Elogtheta)
         score += n.sum(gammaln(gamma) - gammaln(self._alpha))
-        score += sum(gammaln(self._alpha*self._K) - gammaln(n.sum(gamma, 1)))
+        score += sum(gammaln(self._alpha * self._K) - gammaln(n.sum(gamma, 1)))
 
         # Compensate for the subsampling of the population of documents
         score = score * self._D / len(docs)
 
         # E[log p(beta | eta) - log q (beta | lambda)]
-        score = score + n.sum((self._eta-self._lambda)*self._Elogbeta)
+        score = score + n.sum((self._eta - self._lambda) * self._Elogbeta)
         score = score + n.sum(gammaln(self._lambda) - gammaln(self._eta))
-        score = score + n.sum(gammaln(self._eta*self._W) - 
+        score = score + n.sum(gammaln(self._eta * self._W) -
                               gammaln(n.sum(self._lambda, 1)))
 
-        return(score)
+        return (score)
+
 
 def main():
     infile = sys.argv[1]
@@ -463,11 +467,12 @@ def main():
                       0.1, 0.01, 1, 0.75)
     for i in range(1000):
         print(i)
-        wordids = [d.words for d in docs.docs[(i*S):((i+1)*S)]]
-        wordcts = [d.counts for d in docs.docs[(i*S):((i+1)*S)]]
+        wordids = [d.words for d in docs.docs[(i * S):((i + 1) * S)]]
+        wordcts = [d.counts for d in docs.docs[(i * S):((i + 1) * S)]]
         model.update_lambda(wordids, wordcts)
         n.savetxt('/tmp/lambda%d' % i, model._lambda.T)
-    
+
+
 #     infile = open(infile)
 #     corpus.read_stream_data(infile, 100000)
 
