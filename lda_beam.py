@@ -100,9 +100,9 @@ def run(argv=None):
   pipeline_options.view_as(StandardOptions).streaming = True
 
   with apache_beam.Pipeline(options=pipeline_options) as p:
-      articles = (p | "Read Articles" >> apache_beam.Create(glob.glob(lda_options.input + '*.txt')))
-      articles = articles | apache_beam.Map(load_text)
-      articles = articles | "Batch elements" >> apache_beam.BatchElements(lda_options.batchsize, lda_options.batchsize)
+      articles = (p | "Read Articles" >> apache_beam.Create(glob.glob(lda_options.input + '*.txt'))) \
+                 | apache_beam.Map(load_text)\
+                 | "Batch elements" >> apache_beam.BatchElements(lda_options.batchsize, lda_options.batchsize)
       articles | apache_beam.ParDo(LdaFn(lda_options.K, lda_options.tau0, lda_options.kappa)) | "Write" >> WriteToText("test.txt")
 
 if __name__ == '__main__':
