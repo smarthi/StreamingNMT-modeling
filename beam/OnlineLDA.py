@@ -52,12 +52,12 @@ class LdaFn(beam.DoFn):
         self.D = 330
 
         # Our vocabulary
-        vocab = open('../onlineldavb/dictnostops.txt', 'rt').readlines()
-        self.W = len(vocab)
+        self.vocab = open('../onlineldavb/dictnostops.txt', 'rt').readlines()
+        self.W = len(self.vocab)
 
 
         # Initialize the algorithm with alpha=1/K, eta=1/K,
-        self.old_alpha = OnlineLDA(vocab, K, self.D, 1./K, 1./K,
+        self.old_alpha = OnlineLDA(self.vocab, K, self.D, 1./K, 1./K,
                                    tau0, kappa)
 
         self.iteration = 0
@@ -80,6 +80,18 @@ class LdaFn(beam.DoFn):
             numpy.savetxt('gamma-%d.dat' % self.iteration, gamma)
 
         self.iteration = self.iteration + 1
+
+        # TODO: Print / Emit the topics after each batch ?!?!
+        for k in range(0, len(self.old_alpha._lambda)):
+            lambdak = list(self.old_alpha._lambda[k, :])
+            lambdak = lambdak / sum(lambdak)
+            temp = zip(lambdak, range(0, len(lambdak)))
+            temp = sorted(temp, key = lambda x: x[0], reverse=True)
+            print('topic %d:' % (k))
+            # feel free to change the "53" here to whatever fits your screen nicely.
+            for i in range(0, 53):
+                print('%20s  \t---\t  %.4f' % (self.vocab[temp[i][1]], temp[i][0]))
+            print()
 
 def load_text(file_name):
     with open(file_name, 'r') as file:
