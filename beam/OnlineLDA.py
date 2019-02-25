@@ -18,42 +18,47 @@ from onlineldavb.onlineldavb import OnlineLDA
 class LdaOptions(PipelineOptions):
     @classmethod
     def _add_argparse_args(cls, parser):
-        parser.add_argument('--secret_number',
-                            default='42')
         parser.add_argument('--input',
                               dest='input',
                               help='Input folder to process.')
-        parser.add_argument('--output',
-                              dest='output',
-                              required=True,
-                              help='Output folder to write results to.')
-        parser.add_argument('--models',
-                              dest='models',
-                              help='Input folder to read model parameters.')
         parser.add_argument('--batchsize',
                               dest='batchsize',
+                              default=10,
+                              type=int,
                               help='Batch size for processing')
+        parser.add_argument('--kappa',
+                              dest='kappa',
+                              default=0.7,
+                              type=float,
+                              help='Learning rate: exponential decay rate')
+        parser.add_argument('--tau0',
+                              dest='tau0',
+                              default=1024,
+                              type=int,
+                              help='A (positive) learning parameter that downweights early iterations')
+        parser.add_argument('--K',
+                              dest='K',
+                              default=100,
+                              type=int,
+                              help='Number of topics')
 
 class LdaFn(beam.DoFn):
 
-    def __init__(self):
-        param = RuntimeValueProvider.get_value('secret_number', int, default_value=0)
-
+    def __init__(self, K, tau0, kappa):
         # The number of documents to analyze each iteration
-        batchsize = 64
-        # The total number of documents in Wikipedia
-        self.D = 3.3e2
-        # The number of topics
-        self.K = 100
+        batchsize = RuntimeValueProvider.get_value('batchsize', int, default_value=64)
 
-        self.documentstoanalyze = int(self.D/batchsize)
+        # The total number of documents in Wikipedia
+        self.D = 330
 
         # Our vocabulary
         vocab = open('../onlineldavb/dictnostops.txt', 'rt').readlines()
         self.W = len(vocab)
 
-        # Initialize the algorithm with alpha=1/K, eta=1/K, tau_0=1024, kappa=0.7
-        self.old_alpha = OnlineLDA(vocab, self.K, self.D, 1./self.K, 1./self.K, 1024., 0.7)
+
+        # Initialize the algorithm with alpha=1/K, eta=1/K,
+        self.old_alpha = OnlineLDA(vocab, K, self.D, 1./K, 1./K,
+                                   tau0, kappa)
 
         self.iteration = 0
 
@@ -91,7 +96,7 @@ def run(argv=None):
       articles = (p | "Read Articles" >> beam.Create(glob.glob(lda_options.input + '*.txt')))
       articles = articles | beam.Map(load_text)
       articles = articles | "Batch elements" >> beam.BatchElements(4, 4)
-      articles | beam.ParDo(LdaFn()) | "Write" >> WriteToText("test.txt")
+      articles | beam.ParDo(LdaFn(lda_options.K, lda_options.tau0, lda_options.kappa)) | "Write" >> WriteToText("test.txt")
 
 if __name__ == '__main__':
   logging.getLogger().setLevel(logging.INFO)
