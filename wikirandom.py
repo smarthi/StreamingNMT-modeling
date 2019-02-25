@@ -79,7 +79,7 @@ def get_random_wikipedia_article():
 
 class WikiThread(threading.Thread):
     articles = list()
-    articlenames = list()
+    article_names = list()
     lock = threading.Lock()
 
     def run(self):
@@ -111,9 +111,11 @@ def get_random_wikipedia_articles(n):
 if __name__ == '__main__':
     t0 = time.time()
 
-    (articles, articlenames) = get_random_wikipedia_articles(1)
+    (articles, article_names) = get_random_wikipedia_articles(50)
     for i in range(0, len(articles)):
-        print(articlenames[i])
+        print(article_names[i])
+        with open("../articles/" + article_names[i] + ".txt", "w") as text_file:
+            text_file.write(articles[i])
 
     t1 = time.time()
     print('took %f' % (t1 - t0))

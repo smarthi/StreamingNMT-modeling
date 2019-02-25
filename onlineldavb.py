@@ -144,7 +144,7 @@ class OnlineLDA:
         it = 0
         meanchange = 0
         for d in range(0, batchD):
-            print((sum(wordcts[d])))
+            #print((sum(wordcts[d])))
             # These are mostly just shorthand (but might help cache locality)
             ids = wordids[d]
             cts = wordcts[d]
@@ -163,7 +163,7 @@ class OnlineLDA:
                 # the update for gamma gives this update. Cf. Lee&Seung 2001.
                 gammad = self._alpha + expElogthetad * \
                          n.dot(cts / phinorm, expElogbetad.T)
-                print((gammad[:, n.newaxis]))
+                #print((gammad[:, n.newaxis]))
                 Elogthetad = dirichlet_expectation(gammad)
                 expElogthetad = n.exp(Elogthetad)
                 phinorm = n.dot(expElogthetad, expElogbetad) + 1e-100
